@@ -13,9 +13,13 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <iostream>
+#include <vector>
+#include <string>
 
 #define GET 1
 #define POST 0
+#define VEC_MAX_SIZE 5000
 #define PORT "3490"  // the port users will be connecting to
 #define BACKLOG 10   // how many pending connections queue will hold
 #define MAXDATASIZE 100 // max number of bytes we can get at once
@@ -48,6 +52,71 @@ char** split (char* input, char** args)
 
   return args;
 }
+
+void recvTxt(int new_fd){
+
+}
+
+void recvImg(int new_fd){
+
+}
+
+void recvHTML(int new_fd){
+
+}
+
+void handlePostRequest(int new_fd, std::vector<std::string> curRequest){
+    if (send(new_fd, "HTTP/1.0 200 OK\r\n", 2, 0) == -1) perror("send");
+
+    std::string fileType = curRequest[3];
+
+    if(fileType.compare("txt") == 0){
+    	recvTxt(new_fd);
+    }else if(fileType.compare("html") == 0){
+		recvHTML(new_fd);
+    }else if(fileType.compare("img") == 0){
+    	recvImg(new_fd);
+    }else{
+		printf("(POST request) file type not recognised\n");
+    }
+}
+
+
+void sendTxt(int new_fd, std::vector<std::string> curRequest){
+
+}
+
+
+void sendHTML(int new_fd, std::vector<std::string> curRequest){
+
+}
+
+
+void sendImg(int new_fd, std::vector<std::string> curRequest){
+
+}
+
+
+void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
+	
+	std::string fileType = curRequest[3];
+	int result;
+
+    if(fileType.compare("txt") == 0){
+    	sendTxt(new_fd, curRequest);
+    }else if(fileType.compare("html") == 0){
+		sendHTML(new_fd, curRequest);
+    }else if(fileType.compare("img") == 0){
+    	sendImg(new_fd, curRequest);
+    }else{
+		printf("(POST request) file type not recognised\n");
+    }
+
+	if(result == -1){
+		printf("file not found");
+	}
+}
+
 
 int main(void)
 {
@@ -129,26 +198,41 @@ int main(void)
             char buf[MAXDATASIZE];
             int numbytes;
             
-            // int n = read(new_fd,buf,255);
-            // printf("%d\n", n);
-            // if (n < 0) perror("ERROR reading from socket");
-            // printf("Here is the message: %s\n",buf);
+            // if ((numbytes = recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1)
+            // {
+            //     perror("recv");
+            //     exit(1);
+            // }
 
-            // printf("%d\n", sockfd);
-            if ((numbytes = recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1)
-            {
-                perror("recv");
-                exit(1);
-            }
+			std::vector<std::vector<std::string> > buffer(VEC_MAX_SIZE);
+			int result = recv(new_fd, buffer.data(), buffer.size(), 0);
+			if (result != -1) {
+			   buffer.resize(result);
+			} else {
+			   // Handle error
+			}
+
+			for(int i = 0; i < VEC_MAX_SIZE; i++){
+
+				std::vector<std::string> curRequest = buffer[i];		
+	            
+	            int rqst_type;
+	            if(curRequest[0].compare("GET") == 0)
+	                rqst_type = GET;
+	            else
+	                rqst_type = POST;
+
+	            if(rqst_type == POST){
+    	            handlePostRequest(new_fd, curRequest);
+    	            // if (send(new_fd, "Hello, world!", 13, 0) == -1) perror("send");
+	            }else{
+	            	handleGetRequest(new_fd, curRequest);
+	            }
+
+			}
 
             printf("%s\n", buf);
 
-            // int rqst_type;
-
-            // if(aaa[0].strcmpr("GET") == 0)
-            //     rqst_type = GET;
-            // else
-            //     rqst_type = POST;
 
             close(new_fd);
             exit(0);
