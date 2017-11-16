@@ -17,6 +17,8 @@
 #include <vector>
 #include <string>
 
+using namespace std;
+
 #define GET_TYPE 1
 #define POST_TYPE 0
 #define VEC_MAX_SIZE 5000
@@ -41,26 +43,11 @@ void* get_in_addr(struct sockaddr* sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-char** split (char* input, char** args)
-{
+bool checkFileExisting(std::string fileName){
 
-  char* pch = strtok (input," ");
-  int i = 0;
-
-  while (pch != NULL)
-  {
-    printf ("%s\n",pch);
-    args[i++] = strtok (NULL, " ");
-  }
-
-  return args;
 }
 
 void recvTxt(int new_fd){
-
-}
-
-void recvImg(int new_fd){
 
 }
 
@@ -68,26 +55,31 @@ void recvHTML(int new_fd){
 
 }
 
-void sendTxt(int new_fd, std::vector<std::string> curRequest){
+void recvImg(int new_fd){
+	
+}
+
+int sendTxt(int new_fd, std::vector<std::string> curRequest){
 
 }
 
-
-void sendHTML(int new_fd, std::vector<std::string> curRequest){
+int sendHTML(int new_fd, std::vector<std::string> curRequest){
 
 }
 
+int sendImg(int new_fd, std::vector<std::string> curRequest){
+	
+}
 
-void sendImg(int new_fd, std::vector<std::string> curRequest){
-
+void sendResponse(int new_fd, char* response){
+    if (send(new_fd, response, strlen(response), 0) == -1)
+    	perror("send response");
 }
 
 void handlePostRequest(int new_fd, std::vector<std::string> curRequest){
-    if (send(new_fd, OK_MSG, 2, 0) == -1)
-    	perror("POST request not OK reply");
+	sendResponse(new_fd, OK_MSG);
 
-    std::string fileType = curRequest[3];
-
+    std::string fileType = curRequest[4];
     if(fileType.compare("txt") == 0){
     	recvTxt(new_fd);
     }else if(fileType.compare("html") == 0){
@@ -99,18 +91,26 @@ void handlePostRequest(int new_fd, std::vector<std::string> curRequest){
     }
 }
 
-
 void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
 	
-	std::string fileType = curRequest[3];
+	std::string fileType = curRequest[4];
 	int result;
-
+	char* response;
+	std::string fileName = curRequest[1];
+	if(!checkFileExisting(fileName)){
+		 response = ERR_MSG;	
+	}else{
+		response = OK_MSG;
+	}
+	
+	sendResponse(new_fd, response);
+    
     if(fileType.compare("txt") == 0){
-    	sendTxt(new_fd, curRequest);
+    	result = sendTxt(new_fd, curRequest);
     }else if(fileType.compare("html") == 0){
-		sendHTML(new_fd, curRequest);
+		result = sendHTML(new_fd, curRequest);
     }else if(fileType.compare("img") == 0){
-    	sendImg(new_fd, curRequest);
+    	result = sendImg(new_fd, curRequest);
     }else{
 		printf("(GET request) file type not recognised\n");
     }
@@ -120,37 +120,6 @@ void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
 	}
 }
 
-
-std::string prepareReponse(std::vector<std::string> curRequest){
-	std::string reponse = OK_MSG;
-	
-	int rqst_type;
-	if(curRequest[0].compare("GET") == 0)
-		rqst_type = GET_TYPE;
-	else
-		rqst_type = POST_TYPE;
-
-	std::string fileName = curRequest[1];
-	if(rqst_type == GET_TYPE){
-		if(checkFileExisting(fileName)){
-			return response;
-		}else{
-			return error_msg;
-		}
-	}else{
-		return reponse;
-	}
-
-}
-
-
-void sendResponse(int new_fd, std::vector<std::string> curRequest){
-
-	std::string response = prepareReponse(curRequest);
-
-    if (send(new_fd, response, 2, 0) == -1) 
-    	perror("send reponse to client: ");
-}
 
 
 int main(void)
@@ -229,17 +198,9 @@ int main(void)
         {
             
             close(sockfd);  // child doesn't need the listener
-            // if (send(new_fd, "Hello, world!", 13, 0) == -1) perror("send");
             char buf[MAXDATASIZE];
             int numbytes;
             
-            // if ((numbytes = recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1)
-            // {
-            //     perror("recv");
-            //     exit(1);
-            // }
-
-            printf("hamada\n");
 			std::vector<std::vector<std::string> > buffer(VEC_MAX_SIZE);
 			// int result = recv(new_fd, buffer.data(), buffer.size(), 0);
 			// if (result != -1) {
@@ -247,45 +208,25 @@ int main(void)
 			// } else {
 			//    // Handle error
 			// }
-			printf("hamada2\n");
-            std::vector<std::vector<std::string> > v (4);	
-		    for(int i = 0; i < 4; i++){
-		        std::vector<std::string> temp;
-		        temp.push_back("GET");
-		        temp.push_back("ahmed.jpg");
-		        temp.push_back("HTTP/1.1");
-		        temp.push_back("img");
-		        v.push_back(temp);
-		    }
 
-			printf("hamada3\n");
-			// for(int i = 0; i < VEC_MAX_SIZE; i++){
-			buffer = v;
-			for(int i = 0; i < 4; i++){
-
-				std::vector<std::string> curRequest = buffer[i];
+			// std::vector<std::string> curRequest = buffer[i];
+	        
 
 
-	            int rqst_type;
-	            if(curRequest[0].compare("GET") == 0)
-	                rqst_type = GET_TYPE;
-	            else
-	                rqst_type = POST_TYPE;
+	        std::vector<std::string> temp;
+	        temp.push_back("POST");
+	        temp.push_back("ahmed.jpg");
+	        temp.push_back("HTTP/1.1");
+	        temp.push_back("HostName");
+	        temp.push_back("img");			
+			std::vector<std::string> curRequest = temp;
+            
+            if(curRequest[0].compare("GET") == 0)
+                handleGetRequest(new_fd, curRequest);
+            else
+	            handlePostRequest(new_fd, curRequest);
 
-	            printf("rqst type is: %d\n", rqst_type);
-	            if(rqst_type == POST_TYPE){
-    	            handlePostRequest(new_fd, curRequest);
-    	            // if (send(new_fd, "Hello, world!", 13, 0) == -1) perror("send");
-	            }else{
-	            	handleGetRequest(new_fd, curRequest);
-	            }
-
-	            sendResponse();
-			}
-
-            printf("%s\n", buf);
-
-
+            cout << "finished" << endl;
             close(new_fd);
             exit(0);
         }
