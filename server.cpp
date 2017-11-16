@@ -17,17 +17,20 @@
 #include <vector>
 #include <string>
 
-#define GET 1
-#define POST 0
+#define GET_TYPE 1
+#define POST_TYPE 0
 #define VEC_MAX_SIZE 5000
 #define PORT "3490"  // the port users will be connecting to
 #define BACKLOG 10   // how many pending connections queue will hold
 #define MAXDATASIZE 100 // max number of bytes we can get at once
+#define OK_MSG "HTTP/1.0 200 OK\r\n"
+#define ERR_MSG "HTTP/1.0 404 Not Found\r\n"
 
 void sigchld_handler(int s)
 {
     while (waitpid(-1, NULL, WNOHANG) > 0);
 }
+
 // get sockaddr, IPv4 or IPv6:
 void* get_in_addr(struct sockaddr* sa)
 {
@@ -65,8 +68,23 @@ void recvHTML(int new_fd){
 
 }
 
+void sendTxt(int new_fd, std::vector<std::string> curRequest){
+
+}
+
+
+void sendHTML(int new_fd, std::vector<std::string> curRequest){
+
+}
+
+
+void sendImg(int new_fd, std::vector<std::string> curRequest){
+
+}
+
 void handlePostRequest(int new_fd, std::vector<std::string> curRequest){
-    if (send(new_fd, "HTTP/1.0 200 OK\r\n", 2, 0) == -1) perror("send");
+    if (send(new_fd, OK_MSG, 2, 0) == -1)
+    	perror("POST request not OK reply");
 
     std::string fileType = curRequest[3];
 
@@ -82,21 +100,6 @@ void handlePostRequest(int new_fd, std::vector<std::string> curRequest){
 }
 
 
-void sendTxt(int new_fd, std::vector<std::string> curRequest){
-
-}
-
-
-void sendHTML(int new_fd, std::vector<std::string> curRequest){
-
-}
-
-
-void sendImg(int new_fd, std::vector<std::string> curRequest){
-
-}
-
-
 void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
 	
 	std::string fileType = curRequest[3];
@@ -109,12 +112,44 @@ void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
     }else if(fileType.compare("img") == 0){
     	sendImg(new_fd, curRequest);
     }else{
-		printf("(POST request) file type not recognised\n");
+		printf("(GET request) file type not recognised\n");
     }
 
 	if(result == -1){
 		printf("file not found");
 	}
+}
+
+
+std::string prepareReponse(std::vector<std::string> curRequest){
+	std::string reponse = OK_MSG;
+	
+	int rqst_type;
+	if(curRequest[0].compare("GET") == 0)
+		rqst_type = GET_TYPE;
+	else
+		rqst_type = POST_TYPE;
+
+	std::string fileName = curRequest[1];
+	if(rqst_type == GET_TYPE){
+		if(checkFileExisting(fileName)){
+			return response;
+		}else{
+			return error_msg;
+		}
+	}else{
+		return reponse;
+	}
+
+}
+
+
+void sendResponse(int new_fd, std::vector<std::string> curRequest){
+
+	std::string response = prepareReponse(curRequest);
+
+    if (send(new_fd, response, 2, 0) == -1) 
+    	perror("send reponse to client: ");
 }
 
 
@@ -204,31 +239,48 @@ int main(void)
             //     exit(1);
             // }
 
+            printf("hamada\n");
 			std::vector<std::vector<std::string> > buffer(VEC_MAX_SIZE);
-			int result = recv(new_fd, buffer.data(), buffer.size(), 0);
-			if (result != -1) {
-			   buffer.resize(result);
-			} else {
-			   // Handle error
-			}
+			// int result = recv(new_fd, buffer.data(), buffer.size(), 0);
+			// if (result != -1) {
+			//    buffer.resize(result);
+			// } else {
+			//    // Handle error
+			// }
+			printf("hamada2\n");
+            std::vector<std::vector<std::string> > v (4);	
+		    for(int i = 0; i < 4; i++){
+		        std::vector<std::string> temp;
+		        temp.push_back("GET");
+		        temp.push_back("ahmed.jpg");
+		        temp.push_back("HTTP/1.1");
+		        temp.push_back("img");
+		        v.push_back(temp);
+		    }
 
-			for(int i = 0; i < VEC_MAX_SIZE; i++){
+			printf("hamada3\n");
+			// for(int i = 0; i < VEC_MAX_SIZE; i++){
+			buffer = v;
+			for(int i = 0; i < 4; i++){
 
-				std::vector<std::string> curRequest = buffer[i];		
-	            
+				std::vector<std::string> curRequest = buffer[i];
+
+
 	            int rqst_type;
 	            if(curRequest[0].compare("GET") == 0)
-	                rqst_type = GET;
+	                rqst_type = GET_TYPE;
 	            else
-	                rqst_type = POST;
+	                rqst_type = POST_TYPE;
 
-	            if(rqst_type == POST){
+	            printf("rqst type is: %d\n", rqst_type);
+	            if(rqst_type == POST_TYPE){
     	            handlePostRequest(new_fd, curRequest);
     	            // if (send(new_fd, "Hello, world!", 13, 0) == -1) perror("send");
 	            }else{
 	            	handleGetRequest(new_fd, curRequest);
 	            }
 
+	            sendResponse();
 			}
 
             printf("%s\n", buf);
