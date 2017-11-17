@@ -35,29 +35,6 @@ bool checkFileExisting(std::string fileName){
     return false;
 }
 
-void recvTxt(int new_fd){
-
-}
-
-void recvHTML(int new_fd){
-
-}
-
-void recvImg(int new_fd){
-	
-}
-
-int sendTxt(int new_fd, std::vector<std::string> curRequest){
-
-}
-
-int sendHTML(int new_fd, std::vector<std::string> curRequest){
-
-}
-
-int sendImg(int new_fd, std::vector<std::string> curRequest){
-	
-}
 
 void sendResponse(int new_fd, char* response){
     if (send(new_fd, response, strlen(response), 0) == -1)

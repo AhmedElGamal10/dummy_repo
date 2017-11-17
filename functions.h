@@ -37,6 +37,12 @@ vector<string> split (string s, string delimiter);
 string get_request(string request);
 string getFileType(vector<string> request);
 vector<string> parse_request(string request);
+void recvImg(int new_fd);
+void recvTxt(int new_fd);
+void recvHTML(int new_fd);
+int sendTxt(int new_fd, std::vector<std::string> curRequest);
+int sendHTML(int new_fd, std::vector<std::string> curRequest);
+int sendImg(int new_fd, std::vector<std::string> curRequest);
 
 
 #endif

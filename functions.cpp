@@ -94,3 +94,27 @@ vector<string> parse_request(string request) {
     // GET => ttt.txt => HTTP/1.1 => Host: => www.tutorialspoint.com
      return result;
 }
+
+void recvImg(int new_fd){
+    
+}
+
+void recvTxt(int new_fd){
+
+}
+
+void recvHTML(int new_fd){
+
+}
+
+int sendTxt(int new_fd, std::vector<std::string> curRequest){
+
+}
+
+int sendHTML(int new_fd, std::vector<std::string> curRequest){
+
+}
+
+int sendImg(int new_fd, std::vector<std::string> curRequest){
+    
+}

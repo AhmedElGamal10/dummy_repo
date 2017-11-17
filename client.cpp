@@ -97,6 +97,10 @@ int main(int argc, char *argv[])
             
             char buffer[MAXDATASIZE];
             // char* buffer;
+            if(fileType.compare("txt") == 0){
+                
+            }
+
             int result = recv(sockfd,buffer, 255, 0);
             if (result <= -1) {
                 perror("recv");
