@@ -17,14 +17,12 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 #define GET_TYPE 1
 #define POST_TYPE 0
 #define VEC_MAX_SIZE 5000
 #define PORT "3490"  // the port users will be connecting to
 #define BACKLOG 10   // how many pending connections queue will hold
-#define MAXDATASIZE 100 // max number of bytes we can get at once
+#define MAXDATASIZE 16 * 1024 // max number of bytes we can get at once
 #define OK_MSG "HTTP/1.0 200 OK\r\n"
 #define ERR_MSG "HTTP/1.0 404 Not Found\r\n"
 
@@ -44,7 +42,7 @@ void* get_in_addr(struct sockaddr* sa)
 }
 
 bool checkFileExisting(std::string fileName){
-
+    return true;
 }
 
 void recvTxt(int new_fd){
@@ -56,7 +54,7 @@ void recvHTML(int new_fd){
 }
 
 void recvImg(int new_fd){
-	
+
 }
 
 int sendTxt(int new_fd, std::vector<std::string> curRequest){
@@ -68,7 +66,7 @@ int sendHTML(int new_fd, std::vector<std::string> curRequest){
 }
 
 int sendImg(int new_fd, std::vector<std::string> curRequest){
-	
+
 }
 
 void sendResponse(int new_fd, char* response){
@@ -92,19 +90,24 @@ void handlePostRequest(int new_fd, std::vector<std::string> curRequest){
 }
 
 void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
-	
-	std::string fileType = curRequest[4];
+    std::cout << "lalala" << std::endl;
+	std::string fileType;// = curRequest[4];
 	int result;
 	char* response;
-	std::string fileName = curRequest[1];
+	std::string fileName;// = curRequest[1];
+
+    std::cout << "ahah" << std::endl;
 	if(!checkFileExisting(fileName)){
-		 response = ERR_MSG;	
+		 response = ERR_MSG;
 	}else{
 		response = OK_MSG;
 	}
-	
+    std::cout << "hamada" << std::endl;
+
 	sendResponse(new_fd, response);
-    
+
+    std::cout << "hamada 2" << std::endl;
+
     if(fileType.compare("txt") == 0){
     	result = sendTxt(new_fd, curRequest);
     }else if(fileType.compare("html") == 0){
@@ -115,6 +118,7 @@ void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
 		printf("(GET request) file type not recognised\n");
     }
 
+    std::cout << "ahah" << std::endl;
 	if(result == -1){
 		printf("file not found");
 	}
@@ -133,7 +137,7 @@ int main(void)
     char s[INET6_ADDRSTRLEN];
     int rv;
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
+    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;  // use my IP
     if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
@@ -191,42 +195,29 @@ int main(void)
             perror("accept");
             continue;
         }
-        inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr*)&their_addr),
-                  s, sizeof s);
+        inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr*) &their_addr), s, sizeof s);
         printf("server: got connection from %s\n", s);
         if (!fork())      // this is the child process
         {
-            
+
             close(sockfd);  // child doesn't need the listener
             char buf[MAXDATASIZE];
-            int numbytes;
-            
-			std::vector<std::vector<std::string> > buffer(VEC_MAX_SIZE);
-			// int result = recv(new_fd, buffer.data(), buffer.size(), 0);
-			// if (result != -1) {
-			//    buffer.resize(result);
-			// } else {
-			//    // Handle error
-			// }
 
-			// std::vector<std::string> curRequest = buffer[i];
-	        
+			int result = recv(new_fd, buf, MAXDATASIZE, 0);
+			if (result == -1) {
+                perror("recv");
+                exit(1);
+            }
 
+            std::cout << buf << std::endl;
+            std::cout << "Here\n";
 
-	        std::vector<std::string> temp;
-	        temp.push_back("POST");
-	        temp.push_back("ahmed.jpg");
-	        temp.push_back("HTTP/1.1");
-	        temp.push_back("HostName");
-	        temp.push_back("img");			
-			std::vector<std::string> curRequest = temp;
-            
-            if(curRequest[0].compare("GET") == 0)
+            /*if(curRequest[0].compare("GET") == 0)
                 handleGetRequest(new_fd, curRequest);
             else
 	            handlePostRequest(new_fd, curRequest);
-
-            cout << "finished" << endl;
+*/
+            std::cout << "Finished" << std::endl;
             close(new_fd);
             exit(0);
         }
