@@ -17,6 +17,9 @@
 #include <vector>
 #include <string.h>
 #include <string>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/sendfile.h>
 
 #define HTTP "HTTP/1.1"
 #define IMAGE "image"
