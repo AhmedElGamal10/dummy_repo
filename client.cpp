@@ -22,6 +22,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(int argc, char *argv[])
 {
+     cout << "client" << endl; 
     int sockfd, numbytes;
     char buf[MAXDATASIZE];
     struct addrinfo hints, *servinfo, *p;
@@ -69,7 +70,6 @@ int main(int argc, char *argv[])
     printf("client: connecting to %s\n", s);
     freeaddrinfo(servinfo); // all done with this structure
     printf("%d\n",sockfd );
-    char* buffer = "msg";
     // Get the requests.
 
     cout << "size : ";
@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
 
         cout << request << endl;
 
-
         if (send(sockfd, request.c_str(), request.size(), 0) == -1) perror("send");
         cout << "after send" << endl;
         // check if get or post.
@@ -94,20 +93,25 @@ int main(int argc, char *argv[])
             // receive file (download).
             cout << "fileType " << fileType << endl;
             cout << "before receive" << endl;
-            
-            char buffer[MAXDATASIZE];
-            // char* buffer;
-            if(fileType.compare("txt") == 0){
-                
-            }
 
-            int result = recv(sockfd,buffer, 255, 0);
+            char buffer[MAXDATASIZE];
+            int result = recv(sockfd, buffer, MAXDATASIZE, 0);
             if (result <= -1) {
                 perror("recv");
                 exit(1);
             }
-            cout << "after receive" << endl;
-            cout << "respond is: " << buffer << endl; 
+
+            // char* buffer;
+            if(fileType.compare("txt") == 0){
+                recvTxt(sockfd, requestVector[FILENAME]);
+            }else if(fileType.compare("img") == 0){
+                cout << "img file in client-side" << endl;
+                recvTxt(sockfd, requestVector[FILENAME]);
+            }
+
+
+            cout << "after receive" << endl;/*
+            cout << "respond is: " << buffer << endl; */
         } else { // post
             // wait for OK message then sent file according to file type.
             char* buffer;    

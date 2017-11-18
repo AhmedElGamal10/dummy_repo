@@ -20,6 +20,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/sendfile.h>
+#include <iostream>
+#include <fstream>
 
 #define HTTP "HTTP/1.1"
 #define IMAGE "image"
@@ -31,6 +33,13 @@
 #define GET "GET"
 #define POST "POST"
 #define CARRiAGERETURN "\r"
+#define REQUESTTYPE 0
+#define FILENAME 1
+#define HOSTNAME 4
+#define MAXDATASIZE 8 * 1024 // max number of bytes we can get at once
+#define OK_MSG "HTTP/1.0 200 OK\r\n"
+#define ERR_MSG "HTTP/1.0 404 Not Found\r\n"
+#define END_MSG "end"
 
 
 using namespace std;
@@ -41,7 +50,7 @@ string get_request(string request);
 string getFileType(vector<string> request);
 vector<string> parse_request(string request);
 void recvImg(int new_fd);
-void recvTxt(int new_fd);
+void recvTxt(int new_fd, string fileName);
 void recvHTML(int new_fd);
 int sendTxt(int new_fd, std::vector<std::string> curRequest);
 int sendHTML(int new_fd, std::vector<std::string> curRequest);

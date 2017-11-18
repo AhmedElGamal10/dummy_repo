@@ -8,13 +8,8 @@
 #define VEC_MAX_SIZE 5000
 #define PORT "3490"  // the port users will be connecting to
 #define BACKLOG 10   // how many pending connections queue will hold
-#define MAXDATASIZE 100 // max number of bytes we can get at once
-#define OK_MSG "HTTP/1.0 200 OK\r\n"
-#define ERR_MSG "HTTP/1.0 404 Not Found\r\n"
 //
-#define REQUESTTYPE 0
-#define FILENAME 1
-#define HOSTNAME 4
+
 
 void sigchld_handler(int s)
 {
@@ -32,22 +27,22 @@ void* get_in_addr(struct sockaddr* sa)
 }
 
 bool checkFileExisting(std::string fileName){
-    return false;
+    return true;
 }
 
 
 void sendResponse(int new_fd, char* response){
-    if (send(new_fd, response, strlen(response), 0) == -1)
+    int yy; 
+    if ((yy = send(new_fd, response, strlen(response), 0)) == -1)
     	perror("send response");
-    close(new_fd);
 }
 
-void handlePostRequest(int new_fd, std::vector<std::string> curRequest){
+void handlePostRequest(int new_fd, std::vector<std::string> request){
 	sendResponse(new_fd, OK_MSG);
 
-    std::string fileType = curRequest[5];
+    std::string fileType = request[5];
     if(fileType.compare("txt") == 0){
-    	recvTxt(new_fd);
+    	recvTxt(new_fd, request[FILENAME]);
     }else if(fileType.compare("html") == 0){
 		recvHTML(new_fd);
     }else if(fileType.compare("img") == 0){
@@ -58,7 +53,6 @@ void handlePostRequest(int new_fd, std::vector<std::string> curRequest){
 }
 
 void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
-	cout << "lalala" << endl;
 	std::string fileType = curRequest[5];
 	int result;
 	char* response;
@@ -71,14 +65,14 @@ void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
 		response = OK_MSG;
 	}
     
-	sendResponse(new_fd, response);
+	 sendResponse(new_fd, response);
 
     if(fileType.compare("txt") == 0){
-    	result = sendTxt(new_fd, curRequest);
+        result = sendTxt(new_fd, curRequest);
     }else if(fileType.compare("html") == 0){
 		result = sendHTML(new_fd, curRequest);
     }else if(fileType.compare("img") == 0){
-    	result = sendImg(new_fd, curRequest);
+    	result = sendTxt(new_fd, curRequest);
     }else{
 		printf("(GET request) file type not recognised\n");
     }
@@ -92,6 +86,7 @@ void handleGetRequest(int new_fd, std::vector<std::string> curRequest){
 
 int main(void)
 {
+    cout << "server" << endl; 
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr;  // connector's address information
@@ -165,11 +160,11 @@ int main(void)
         if (!fork())      // this is the child process
         {
             
-            close(sockfd);  // child doesn't need the listener
+            // close(sockfd);  // child doesn't need the listener
             char buffer[MAXDATASIZE];
 
 			// char* buffer;
-			int result = recv(new_fd,buffer, 255, 0);
+			int result = recv(new_fd, buffer, 255, 0);
 			if (result <= -1) {
                 perror("recv");
                 exit(1);
@@ -183,7 +178,6 @@ int main(void)
             std::vector<std::string> request = parse_request(str);
             
             string fileType = getFileType(request);
-            int requestVectorSize = request.size();
             request[5] = fileType;
 
             // GET => ttt.txt => HTTP/1.1 => Host: => www.tutorialspoint.com
@@ -195,7 +189,7 @@ int main(void)
                 perror("request type");
 
             cout << "finished" << endl;
-            // close(new_fd);
+            close(new_fd);
             exit(0);
         }
     }
